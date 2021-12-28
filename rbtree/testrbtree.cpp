@@ -44,5 +44,14 @@ main(int argc, char **argv) {
 	int r = rbtree1->rank('L');
 	std::cout << "rank: " << r << std::endl;
 
+	std::cout << "Test deletemin \n";
+	rbtree1->deleteMin();
+	rbtree1->print();
+	std::cout << "Tree size: " << rbtree1->size() << std::endl;
+	rbtree1->deleteMin();
+	rbtree1->print();
+	std::cout << "Tree size: " << rbtree1->size() << std::endl;
+
+
 	return 0;
 }

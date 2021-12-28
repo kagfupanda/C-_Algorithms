@@ -4,6 +4,7 @@
 /* Red-black tree implemenation */
 #include <iostream>
 #include <string>
+#include <deque>
 //Associate key to value
 // key is char, value is int
 
@@ -11,6 +12,8 @@ typedef char Key_t;
 typedef int Value_t;
 class RBTree {
 public:
+	static const bool RED = true;
+	static const bool BLACK = false;
 	RBTree() { // ctor (deafault ctor) creates empty
 		root = NULL;
 	}
@@ -52,6 +55,13 @@ public:
 	void print() {
 		print(root, 0);
 	}
+	void deleteMin() {
+		root = deleteMin(root);
+	}
+
+	// red black tree changes
+	
+
 	
 private:
 	// inner class
@@ -60,19 +70,108 @@ private:
 		Value_t value;
 		Node *left; //left subtree
 		Node *right; // right subtree
-		bool color; // node color: red = true, black = false
+		bool color; // node color: RED or BLACK
 		int count = 1; // subtree count
 		
 		Node(Key_t k, Value_t v) {
 			key = k;
 			value = v;
-			color = false;
+			color = RBTree::RED; // default RED
 			left = NULL;
 			right = NULL;
 		}
 	};
 	
 	Node *root; // root of the tree
+
+	//Red Black tree code changes ============== 
+	bool isRed(RBTree:: Node *cur) {
+		if(cur == NULL) return RBTree::BLACK;
+		return cur->color == RBTree::RED;
+	}
+	RBTree::Node *
+	rotateLeft(RBTree::Node *cur) {
+		/**
+			cur
+			/ \
+	        cur-left   cur-right
+			     /  \
+			middleleft  bigright
+
+		to:
+			cur-right (new root)
+			  /  \
+                       cur   bigtright
+		       / \
+	        cur-left middleleft
+		*/
+		RBTree::Node *new_root = cur->right; // save new root
+		cur->right = new_root->left; // set mid left to currents right
+		new_root->left = cur;
+		new_root->color = cur->color;
+		cur->color = RBTree::RED;
+		return new_root;
+		
+	}
+	RBTree::Node *
+	rotateRight(RBTree:: Node *cur) {
+		/**
+			cur
+			/ \
+		cur-left   cur->right
+		  /  \
+	 small-left  middle-right
+
+			cur-left
+			/    \
+		  small-left  cur
+			     /  \
+                          midright cur-right
+		*/
+		RBTree::Node *new_root = cur->left; // save new root
+		cur->left = new_root->right; //midright
+		new_root->right = cur;
+		new_root->color = cur->color;
+		cur->color = RBTree::RED;
+		return new_root;
+	}
+
+	void
+	flipColors(RBTree::Node *cur) {
+		cur->color = RBTree::RED;
+		cur->left->color = RBTree::BLACK;
+		cur->right->color = RBTree::BLACK;
+	}
+
+	class InorderIterator {
+	public:
+		InorderIterator(RBTree::Node * node) { // ctor
+			cur = node;
+		}
+		~InorderIterator() { //dtor
+			// nothing to do
+		}
+		InorderIterator& operator++() { //called when ++iter
+			return * this;	
+		} 
+		InorderIterator operator++(int)  { //called when iter++
+			InorderIterator tmp = *this;
+			++*this;
+			return tmp;
+		}	
+		
+		bool operator==(const InorderIterator& other) { // comparison
+			return this == &other; // compare pointer addresses
+		}
+
+		bool operator!=(const InorderIterator& other) {
+			return *this == other; // call operator == method above
+		}
+
+	private:
+		RBTree::Node *cur;
+		std::deque<RBTree::Node *> queueOfNodes;
+	};
 	
 	// recursive put function
 	// update subtree count
@@ -93,6 +192,17 @@ private:
 		} else { // key exists, update value
 			cur->value = v;
 		}
+		// Red-Black tree blance code
+		if(isRed(cur->right) && !isRed(cur->left)) {
+			cur = rotateLeft(cur);
+		}
+		if(isRed(cur->left) && isRed(cur->left->left)) {
+			cur = rotateRight(cur);
+		}
+		if(isRed(cur->left) && isRed(cur->right)) {
+			flipColors(cur);
+		}
+		// Red-Black tree blance code
 		cur->count = 1 + size(cur->left) + size(cur->right);
 		return cur;
 	}
@@ -150,6 +260,23 @@ private:
 		} else {
 			return 1 + size(cur->left);
 		}
+	}
+	RBTree::Node *
+	deleteMin(RBTree::Node * cur) {
+		if (cur == NULL)
+			return cur;
+		if (cur->left !=NULL) { // min value in left subtree
+			cur->left = deleteMin(cur->left);
+		} else { // current is the minmum, return its right node
+			// remvoe current node and return right subtree
+			RBTree::Node *saveright = cur->right;
+			delete cur;
+			return saveright;
+		}
+		// update subtree count
+		cur->count = 1 + size(cur->left) + size(cur->right);
+		return cur;	
+	
 	}
 };
 
